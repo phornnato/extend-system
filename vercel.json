@@ -18,7 +18,6 @@
           "dest": "/api/index.php"
       }
     ],
-    "buildCommand": "composer install && php artisan migrate --force",
     "env": {
       "APP_ENV": "production",
       "APP_DEBUG": "true",
