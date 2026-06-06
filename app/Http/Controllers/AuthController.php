@@ -12,23 +12,69 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
-            // Validate input
-            $validated = $request->validate([
-                'username' => 'required|string|min:2|max:255|unique:users,name',
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:8',
-                'password_confirmation' => 'required|same:password',
-            ]);
+            // Log incoming request
+            \Log::info('Register request:', $request->all());
+
+            // Basic validation without database unique checks first
+            $email = $request->input('email');
+            $username = $request->input('username');
+            $password = $request->input('password');
+            $passwordConfirm = $request->input('password_confirmation');
+
+            // Manual validation
+            if (!$email || !$username || !$password || !$passwordConfirm) {
+                return response()->json([
+                    'message' => 'All fields are required',
+                ], 422);
+            }
+
+            if (strlen($username) < 2) {
+                return response()->json([
+                    'message' => 'Username must be at least 2 characters',
+                ], 422);
+            }
+
+            if (strlen($password) < 8) {
+                return response()->json([
+                    'message' => 'Password must be at least 8 characters',
+                ], 422);
+            }
+
+            if ($password !== $passwordConfirm) {
+                return response()->json([
+                    'message' => 'Passwords do not match',
+                ], 422);
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return response()->json([
+                    'message' => 'Invalid email format',
+                ], 422);
+            }
+
+            // Check if user exists
+            $existingUser = User::where('email', $email)->orWhere('name', $username)->first();
+            if ($existingUser) {
+                return response()->json([
+                    'message' => 'Email or username already exists',
+                ], 422);
+            }
+
+            \Log::info('Creating user...');
 
             // Create user
             $user = User::create([
-                'name' => $validated['username'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
+                'name' => $username,
+                'email' => $email,
+                'password' => Hash::make($password),
             ]);
+
+            \Log::info('User created:', $user->toArray());
 
             // Generate token
             $token = $user->createToken('auth_token')->plainTextToken;
+
+            \Log::info('Token generated');
 
             return response()->json([
                 'message' => 'User registered successfully',
@@ -39,18 +85,15 @@ class AuthController extends Controller
                 ],
                 'token' => $token,
             ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $errors = [];
-            foreach ($e->errors() as $field => $messages) {
-                $errors[$field] = $messages[0];
-            }
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $errors,
-            ], 422);
         } catch (\Throwable $e) {
+            \Log::error('Register error:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
-                'message' => 'Registration failed',
+                'message' => $e->getMessage(),
                 'error' => $e->getMessage(),
             ], 400);
         }
@@ -59,24 +102,55 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try {
-            // Validate input
-            $validated = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string|min:8',
-            ]);
+            \Log::info('Login request:', $request->all());
 
-            // Find user
-            $user = User::where('email', $validated['email'])->first();
+            $email = $request->input('email');
+            $password = $request->input('password');
 
-            // Check password
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
+            if (!$email || !$password) {
+                return response()->json([
+                    'message' => 'Email and password are required',
+                ], 422);
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return response()->json([
+                    'message' => 'Invalid email format',
+                ], 422);
+            }
+
+            if (strlen($password) < 8) {
                 return response()->json([
                     'message' => 'Invalid email or password',
                 ], 401);
             }
 
+            \Log::info('Finding user...');
+
+            // Find user
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                \Log::info('User not found');
+                return response()->json([
+                    'message' => 'Invalid email or password',
+                ], 401);
+            }
+
+            // Check password
+            if (!Hash::check($password, $user->password)) {
+                \Log::info('Password mismatch');
+                return response()->json([
+                    'message' => 'Invalid email or password',
+                ], 401);
+            }
+
+            \Log::info('User authenticated');
+
             // Generate token
             $token = $user->createToken('auth_token')->plainTextToken;
+
+            \Log::info('Token generated');
 
             return response()->json([
                 'message' => 'Login successful',
@@ -87,18 +161,15 @@ class AuthController extends Controller
                 ],
                 'token' => $token,
             ], 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $errors = [];
-            foreach ($e->errors() as $field => $messages) {
-                $errors[$field] = $messages[0];
-            }
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $errors,
-            ], 422);
         } catch (\Throwable $e) {
+            \Log::error('Login error:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            
             return response()->json([
-                'message' => 'Login failed',
+                'message' => $e->getMessage(),
                 'error' => $e->getMessage(),
             ], 400);
         }
