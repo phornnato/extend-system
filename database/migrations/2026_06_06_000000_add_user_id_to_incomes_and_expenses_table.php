@@ -1,40 +1,16 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('incomes', function (Blueprint $table) {
-            if (!Schema::hasColumn('incomes', 'user_id')) {
-                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            }
-        });
-
-        Schema::table('expenses', function (Blueprint $table) {
-            if (!Schema::hasColumn('expenses', 'user_id')) {
-                $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            }
-        });
+        // Columns already added in create_incomes_table and create_expenses_table
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('incomes', function (Blueprint $table) {
-            $table->dropForeignIdFor('user_id');
-        });
-
-        Schema::table('expenses', function (Blueprint $table) {
-            $table->dropForeignIdFor('user_id');
-        });
+        //
     }
 };

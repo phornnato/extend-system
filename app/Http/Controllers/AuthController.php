@@ -16,8 +16,17 @@ class AuthController extends Controller
             $username = $request->input('username');
             $password = $request->input('password');
 
+            // Validate inputs
             if (!$email || !$username || !$password) {
                 return response()->json(['message' => 'Missing fields'], 400);
+            }
+
+            if (strlen($password) < 8) {
+                return response()->json(['message' => 'Password must be at least 8 characters'], 400);
+            }
+
+            if (strlen($username) < 2) {
+                return response()->json(['message' => 'Username must be at least 2 characters'], 400);
             }
 
             // Check if user exists
@@ -36,15 +45,16 @@ class AuthController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Registered',
+                'message' => 'Registered successfully',
                 'user' => ['id' => $user->id, 'name' => $user->name, 'email' => $user->email],
                 'token' => $token,
             ], 201);
         } catch (\Exception $e) {
+            \Log::error('Registration error: ' . $e->getMessage() . ' at line ' . $e->getLine());
+            
             return response()->json([
-                'message' => 'Register error',
-                'error' => $e->getMessage(),
-                'line' => $e->getLine(),
+                'message' => 'Registration failed',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : 'Server error',
             ], 500);
         }
     }

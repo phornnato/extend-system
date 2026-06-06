@@ -18,9 +18,10 @@
           "dest": "/api/index.php"
       }
     ],
+    "buildCommand": "composer install && php artisan migrate --force",
     "env": {
       "APP_ENV": "production",
-      "APP_DEBUG": "false",
+      "APP_DEBUG": "true",
       "APP_URL": "https://extend-system.vercel.app/",
       "APP_CONFIG_CACHE": "/tmp/config.php",
       "APP_EVENTS_CACHE": "/tmp/events.php",
