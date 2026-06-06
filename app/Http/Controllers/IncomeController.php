@@ -7,9 +7,12 @@ use Illuminate\Http\Request;
 
 class IncomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Income::with('category')->latest()->get();
+        return Income::where('user_id', $request->user()->id)
+            ->with('category')
+            ->latest()
+            ->get();
     }
 
     public function store(Request $request)
@@ -21,16 +24,26 @@ class IncomeController extends Controller
             'category_id' => 'nullable|exists:categories,id',
         ]);
 
-        return Income::create($validated);
+        return Income::create([
+            'user_id' => $request->user()->id,
+            ...$validated,
+        ]);
     }
 
-    public function show(Income $income)
+    public function show(Request $request, Income $income)
     {
+        if ($income->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         return $income->load('category');
     }
 
     public function update(Request $request, Income $income)
     {
+        if ($income->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $validated = $request->validate([
             'amount' => 'sometimes|numeric',
             'description' => 'sometimes|string',
@@ -42,8 +55,11 @@ class IncomeController extends Controller
         return $income;
     }
 
-    public function destroy(Income $income)
+    public function destroy(Request $request, Income $income)
     {
+        if ($income->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         $income->delete();
         return response()->noContent();
     }

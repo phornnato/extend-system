@@ -9,12 +9,17 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    public function daily()
+    public function daily(Request $request)
     {
+        $userId = $request->user()->id;
         $today = Carbon::today()->toDateString();
         
-        $income = Income::whereDate('date', $today)->sum('amount');
-        $expense = Expense::whereDate('date', $today)->sum('amount');
+        $income = Income::where('user_id', $userId)
+            ->whereDate('date', $today)
+            ->sum('amount');
+        $expense = Expense::where('user_id', $userId)
+            ->whereDate('date', $today)
+            ->sum('amount');
         
         return response()->json([
             'report_type' => 'daily',
@@ -25,13 +30,18 @@ class ReportController extends Controller
         ]);
     }
 
-    public function weekly()
+    public function weekly(Request $request)
     {
+        $userId = $request->user()->id;
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
         
-        $income = Income::whereBetween('date', [$startOfWeek, $endOfWeek])->sum('amount');
-        $expense = Expense::whereBetween('date', [$startOfWeek, $endOfWeek])->sum('amount');
+        $income = Income::where('user_id', $userId)
+            ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->sum('amount');
+        $expense = Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->sum('amount');
         
         return response()->json([
             'report_type' => 'weekly',
@@ -43,13 +53,18 @@ class ReportController extends Controller
         ]);
     }
 
-    public function monthly()
+    public function monthly(Request $request)
     {
+        $userId = $request->user()->id;
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
         
-        $income = Income::whereBetween('date', [$startOfMonth, $endOfMonth])->sum('amount');
-        $expense = Expense::whereBetween('date', [$startOfMonth, $endOfMonth])->sum('amount');
+        $income = Income::where('user_id', $userId)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+        $expense = Expense::where('user_id', $userId)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
         
         return response()->json([
             'report_type' => 'monthly',
