@@ -13,13 +13,19 @@ Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout']);
 
+// Public Categories (Read-only)
+Route::get('categories', [CategoryController::class, 'index']);
+Route::get('categories/{category}', [CategoryController::class, 'show']);
+
 // Protected Routes (require authentication)
 Route::middleware('token.auth')->group(function () {
     Route::get('profile', [AuthController::class, 'profile']);
     Route::put('profile', [AuthController::class, 'updateProfile']);
     
-    // Categories (can be public or protected - currently public)
-    Route::apiResource('categories', CategoryController::class);
+    // Categories (Create, Update, Delete - Protected)
+    Route::post('categories', [CategoryController::class, 'store']);
+    Route::put('categories/{category}', [CategoryController::class, 'update']);
+    Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
     
     // Incomes (Protected per user)
     Route::apiResource('incomes', IncomeController::class);
