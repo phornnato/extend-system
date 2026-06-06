@@ -61,6 +61,7 @@
         <p>Sorry, the page or API endpoint you are looking for does not exist.</p>
         
         <div class="debug-info">
+            <strong>Message:</strong> {{ $exception->getMessage() ?: 'No additional error details available.' }} <br>
             <strong>Requested URL:</strong> {{ request()->fullUrl() }} <br>
             <strong>Time (Asia/Phnom_Penh):</strong> {{ now()->toDateTimeString() }}
         </div>
