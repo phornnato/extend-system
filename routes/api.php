@@ -12,22 +12,26 @@ use App\Http\Controllers\CategoryController;
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout']);
-Route::get('profile', [AuthController::class, 'profile']);
-Route::put('profile', [AuthController::class, 'updateProfile']);
 
-// Categories (Public)
-Route::apiResource('categories', CategoryController::class);
-
-// Incomes (Public)
-Route::apiResource('incomes', IncomeController::class);
-
-// Expenses (Public)
-Route::apiResource('expenses', ExpenseController::class);
-
-// Reports (Public)
-Route::get('reports/daily', [ReportController::class, 'daily']);
-Route::get('reports/weekly', [ReportController::class, 'weekly']);
-Route::get('reports/monthly', [ReportController::class, 'monthly']);
+// Protected Routes (require authentication)
+Route::middleware('token.auth')->group(function () {
+    Route::get('profile', [AuthController::class, 'profile']);
+    Route::put('profile', [AuthController::class, 'updateProfile']);
+    
+    // Categories (can be public or protected - currently public)
+    Route::apiResource('categories', CategoryController::class);
+    
+    // Incomes (Protected per user)
+    Route::apiResource('incomes', IncomeController::class);
+    
+    // Expenses (Protected per user)
+    Route::apiResource('expenses', ExpenseController::class);
+    
+    // Reports (Protected per user)
+    Route::get('reports/daily', [ReportController::class, 'daily']);
+    Route::get('reports/weekly', [ReportController::class, 'weekly']);
+    Route::get('reports/monthly', [ReportController::class, 'monthly']);
+});
 
 // Deployment Helper - Run migrations
 Route::post('migrate', function () {
