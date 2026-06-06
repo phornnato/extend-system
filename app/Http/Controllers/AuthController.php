@@ -12,6 +12,7 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         try {
+            // Validate input
             $validated = $request->validate([
                 'username' => 'required|string|min:2|max:255|unique:users,name',
                 'email' => 'required|email|unique:users,email',
@@ -19,55 +20,87 @@ class AuthController extends Controller
                 'password_confirmation' => 'required|same:password',
             ]);
 
+            // Create user
             $user = User::create([
                 'name' => $validated['username'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
             ]);
 
+            // Generate token
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'message' => 'User registered successfully',
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
                 'token' => $token,
             ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = [];
+            foreach ($e->errors() as $field => $messages) {
+                $errors[$field] = $messages[0];
+            }
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $errors,
+            ], 422);
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Registration failed',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], 400);
         }
     }
 
     public function login(Request $request)
     {
         try {
+            // Validate input
             $validated = $request->validate([
                 'email' => 'required|email',
                 'password' => 'required|string|min:8',
             ]);
 
+            // Find user
             $user = User::where('email', $validated['email'])->first();
 
+            // Check password
             if (!$user || !Hash::check($validated['password'], $user->password)) {
                 return response()->json([
-                    'message' => 'Invalid credentials',
+                    'message' => 'Invalid email or password',
                 ], 401);
             }
 
+            // Generate token
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'message' => 'Login successful',
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
                 'token' => $token,
             ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = [];
+            foreach ($e->errors() as $field => $messages) {
+                $errors[$field] = $messages[0];
+            }
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $errors,
+            ], 422);
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => 'Login failed',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], 400);
         }
     }
 
