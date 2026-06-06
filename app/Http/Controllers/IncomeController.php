@@ -9,10 +9,17 @@ class IncomeController extends Controller
 {
     public function index(Request $request)
     {
-        return Income::where('user_id', $request->user()->id)
-            ->with('category')
-            ->latest()
-            ->get();
+        try {
+            if (!$request->user()) {
+                return response()->json(['message' => 'Unauthorized - no user', 'error' => 'Please login first'], 401);
+            }
+            return Income::where('user_id', $request->user()->id)
+                ->with('category')
+                ->latest()
+                ->get();
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Income index error', 'error' => $e->getMessage()], 500);
+        }
     }
 
     public function store(Request $request)
